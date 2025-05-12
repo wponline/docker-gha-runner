@@ -25,10 +25,24 @@ container is torn down and restarted when the action ends, therefore it's statel
 Bring up the container, setting `ACCESS_TOKEN` and `REPOSITORY`.
 
 ```sh
-docker run -e REPOSITORY=... -e ACCESS_TOKEN=... -d --rm ghcr.io/kevmo314/docker-gha-runner:main
+docker run -e REPOSITORY=... -e ACCESS_TOKEN=... -d --rm --restart always ghcr.io/kevmo314/docker-gha-runner:main
+```
+
+Once it's running, check out your runners page:
+
+![image](https://github.com/user-attachments/assets/1f2ee5a3-03e3-4bcb-9905-09a5cb2b1024)
+
+You can then update your GitHub Actions workflows:
+
+```yaml
+jobs:
+  build:
+    runs-on: [self-hosted, linux]
 ```
 
 ## Usage with Docker Compose
+
+Using `docker compose` allows some additional cool features such as adding replicas.
 
 Create a `docker-compose.yml`
 
@@ -50,3 +64,40 @@ Then
 ```
 docker compose up -d
 ```
+
+## Platform Emulation
+
+If you want to emulate a different platform (such as an arm64 machine on an x86-64 machine), first make sure
+you've configured qemu
+
+```sh
+docker run --rm --privileged multiarch/qemu-user-static --reset --persistent yes --credential yes
+```
+
+Then, set `platform` in your compose file:
+
+```yaml
+services:
+  runner_amd64:
+    image: ghcr.io/kevmo314/docker-gha-runner:main
+    platform: linux/amd64
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 4
+    environment:
+      REPOSITORY: <the repository you wish to link to>
+      ACCESS_TOKEN: <github access token>
+  runner_arm64:
+    image: ghcr.io/kevmo314/docker-gha-runner:main
+    platform: linux/arm64
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 4
+    environment:
+      REPOSITORY: <the repository you wish to link to>
+      ACCESS_TOKEN: <github access token>
+```
+
+And you should now have four x86-64 runners and four arm64 runners. Neat!

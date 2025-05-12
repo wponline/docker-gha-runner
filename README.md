@@ -8,6 +8,9 @@ I kept getting annoyed by how the GitHub Actions runner script is sort of statef
 What I really want is the exact same as the GitHub Actions default runner but self-host it. This is in that direction. The actions
 container is torn down and restarted when the action ends, therefore it's stateless like the default runner.
 
+Additionally, I have a powerful dev machine and I wanted to use that as a runner so I didn't have to pay for a third-party service
+to use what resources I already have.
+
 ## Features
 
 * Stateless execution

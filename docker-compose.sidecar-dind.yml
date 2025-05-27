@@ -3,8 +3,6 @@ services:
     image: ghcr.io/kevmo314/docker-gha-runner:main
     platform: linux/amd64
     restart: always
-    networks:
-      - runnernet
     environment:
       - DOCKER_CERT_PATH=/certs/client
       - DOCKER_TLS_VERIFY=1
@@ -20,8 +18,6 @@ services:
     image: ghcr.io/kevmo314/docker-gha-runner:main
     platform: linux/arm64
     restart: always
-    networks:
-      - runnernet
     environment:
       - DOCKER_CERT_PATH=/certs/client
       - DOCKER_TLS_VERIFY=1
@@ -35,14 +31,10 @@ services:
     depends_on:
       qemu-multiarch:
         condition: service_completed_successfully
-  dind-sidecar:
+  docker:
     image: docker:dind
     privileged: true
     restart: always
-    networks:
-      runnernet:
-        aliases:
-          - docker
     environment:
       - DOCKER_TLS_CERTDIR=/certs
     volumes:
@@ -59,22 +51,9 @@ services:
     image: multiarch/qemu-user-static
     privileged: true
     command: --reset --persistent yes --credential yes
-    networks:
-      - runnernet
     depends_on:
-      dind-sidecar:
+      docker:
         condition: service_healthy
-
-networks:
-  runnernet:
-    attachable: true
-    driver: bridge
-    driver_opts:
-      com.docker.network.bridge.name: docker_gha-net # Limit of 15 characters
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.25.0.0/24 # Change to an appropriate subnet if necessary
 
 volumes:
   docker-certs-client:

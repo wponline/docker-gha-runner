@@ -2,8 +2,6 @@ services:
   gha-runner:
     image: ghcr.io/kevmo314/docker-gha-runner:main
     restart: always
-    networks:
-      - runnernet
     environment:
       - DOCKER_CERT_PATH=/certs/client
       - DOCKER_TLS_VERIFY=1
@@ -13,16 +11,12 @@ services:
     volumes:
       - docker-certs-client:/certs/client:ro
     depends_on:
-      dind-sidecar:
+      docker:
         condition: service_healthy
-  dind-sidecar:
+  docker:
     image: docker:dind
     privileged: true
     restart: always
-    networks:
-      runnernet:
-        aliases:
-          - docker
     environment:
       - DOCKER_TLS_CERTDIR=/certs
     volumes:
@@ -35,17 +29,6 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
-
-networks:
-  runnernet:
-    attachable: true
-    driver: bridge
-    driver_opts:
-      com.docker.network.bridge.name: docker_gha-net # Limit of 15 characters
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.25.0.0/24 # Change to an appropriate subnet if necessary
 
 volumes:
   docker-certs-client:

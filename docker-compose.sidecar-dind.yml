@@ -1,0 +1,97 @@
+services:
+  gha-runner-amd64:
+    image: ghcr.io/kevmo314/docker-gha-runner:main
+    platform: linux/amd64
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 2
+    networks:
+      - runnernet
+    environment:
+      - DOCKER_CERT_PATH=/certs/client
+      - DOCKER_TLS_VERIFY=1
+      - DOCKER_HOST=docker:2376
+    env_file:
+      - container-vars.env
+    volumes:
+      - docker-certs-client:/certs/client:ro
+    depends_on:
+      qemu-multiarch:
+        condition: service_completed_successfully
+  gha-runner-arm64:
+    image: ghcr.io/kevmo314/docker-gha-runner:main
+    platform: linux/arm64
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 2
+    networks:
+      - runnernet
+    environment:
+      - DOCKER_CERT_PATH=/certs/client
+      - DOCKER_TLS_VERIFY=1
+      - DOCKER_HOST=docker:2376
+      - DOCKER_DEFAULT_PLATFORM=linux/arm64
+      - DOTNET_EnableWriteXorExecute=0 # Workaround for .NET under QEMU and ARM64
+    env_file:
+      - container-vars.env
+    volumes:
+      - docker-certs-client:/certs/client:ro
+    depends_on:
+      qemu-multiarch:
+        condition: service_completed_successfully
+  dind-sidecar:
+    image: docker:dind
+    privileged: true
+    restart: always
+    deploy:
+      resources:
+        limits:
+          pids: -1
+    networks:
+      runnernet:
+        aliases:
+          - docker
+    environment:
+      - DOCKER_TLS_CERTDIR=/certs
+    volumes:
+      - docker-certs-ca:/certs/ca
+      - docker-certs-client:/certs/client
+      - docker-var-lib-docker:/var/lib/docker
+    healthcheck:
+      test: ["CMD-SHELL", "docker-entrypoint.sh version > /dev/null || exit 1"] # Copied from the Docker library healthcheck repo
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    ulimits:
+      nofile: 1048576
+      nproc: -1
+      core: -1
+    oom_score_adj: "-500"
+  qemu-multiarch:
+    image: multiarch/qemu-user-static
+    privileged: true
+    command: --reset --persistent yes --credential yes
+    networks:
+      - runnernet
+    depends_on:
+      dind-sidecar:
+        condition: service_healthy
+
+networks:
+  runnernet:
+    attachable: true
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: docker_gha-net # Limit of 15 characters
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.0.0/24
+
+volumes:
+  docker-certs-client:
+  docker-certs-ca:
+  docker-var-lib-docker:

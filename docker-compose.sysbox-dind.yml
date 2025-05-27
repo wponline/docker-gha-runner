@@ -8,23 +8,7 @@ services:
         VERSION: 2.324.0
     runtime: sysbox-runc
     restart: always
-    deploy:
-      mode: replicated
-      replicas: 2
-    networks:
-      - runnernet
     environment:
       - DOCKER_SYSBOX_RUNTIME=true
     env_file:
       - container-vars.env
-
-networks:
-  runnernet:
-    attachable: true
-    driver: bridge
-    driver_opts:
-      com.docker.network.bridge.name: docker_gha-net # Limit of 15 characters
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.25.0.0/24

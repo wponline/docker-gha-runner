@@ -3,9 +3,6 @@ services:
     image: ghcr.io/kevmo314/docker-gha-runner:main
     platform: linux/amd64
     restart: always
-    deploy:
-      mode: replicated
-      replicas: 2
     networks:
       - runnernet
     environment:
@@ -23,9 +20,6 @@ services:
     image: ghcr.io/kevmo314/docker-gha-runner:main
     platform: linux/arm64
     restart: always
-    deploy:
-      mode: replicated
-      replicas: 2
     networks:
       - runnernet
     environment:
@@ -45,10 +39,6 @@ services:
     image: docker:dind
     privileged: true
     restart: always
-    deploy:
-      resources:
-        limits:
-          pids: -1
     networks:
       runnernet:
         aliases:
@@ -65,11 +55,6 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
-    ulimits:
-      nofile: 1048576
-      nproc: -1
-      core: -1
-    oom_score_adj: "-500"
   qemu-multiarch:
     image: multiarch/qemu-user-static
     privileged: true
@@ -89,7 +74,7 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.25.0.0/24
+        - subnet: 172.25.0.0/24 # Change to an appropriate subnet if necessary
 
 volumes:
   docker-certs-client:

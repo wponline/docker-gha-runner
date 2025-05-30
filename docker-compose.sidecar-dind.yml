@@ -1,0 +1,61 @@
+services:
+  gha-runner-amd64:
+    image: ghcr.io/kevmo314/docker-gha-runner:main
+    platform: linux/amd64
+    restart: always
+    environment:
+      - DOCKER_CERT_PATH=/certs/client
+      - DOCKER_TLS_VERIFY=1
+      - DOCKER_HOST=docker:2376
+    env_file:
+      - container-vars.env
+    volumes:
+      - docker-certs-client:/certs/client:ro
+    depends_on:
+      qemu-multiarch:
+        condition: service_completed_successfully
+  gha-runner-arm64:
+    image: ghcr.io/kevmo314/docker-gha-runner:main
+    platform: linux/arm64
+    restart: always
+    environment:
+      - DOCKER_CERT_PATH=/certs/client
+      - DOCKER_TLS_VERIFY=1
+      - DOCKER_HOST=docker:2376
+      - DOCKER_DEFAULT_PLATFORM=linux/arm64
+      - DOTNET_EnableWriteXorExecute=0 # Workaround for .NET under QEMU and ARM64
+    env_file:
+      - container-vars.env
+    volumes:
+      - docker-certs-client:/certs/client:ro
+    depends_on:
+      qemu-multiarch:
+        condition: service_completed_successfully
+  docker:
+    image: docker:dind
+    privileged: true
+    restart: always
+    environment:
+      - DOCKER_TLS_CERTDIR=/certs
+    volumes:
+      - docker-certs-ca:/certs/ca
+      - docker-certs-client:/certs/client
+      - docker-var-lib-docker:/var/lib/docker
+    healthcheck:
+      test: ["CMD-SHELL", "docker-entrypoint.sh version > /dev/null || exit 1"] # Copied from the Docker library healthcheck repo
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+  qemu-multiarch:
+    image: multiarch/qemu-user-static
+    privileged: true
+    command: --reset --persistent yes --credential yes
+    depends_on:
+      docker:
+        condition: service_healthy
+
+volumes:
+  docker-certs-client:
+  docker-certs-ca:
+  docker-var-lib-docker:

@@ -8,8 +8,8 @@ I kept getting annoyed by how the GitHub Actions runner script is sort of statef
 What I really want is the exact same as the GitHub Actions default runner but self-host it. This is in that direction. The actions
 container is torn down and restarted when the action ends, therefore it's stateless like the default runner.
 
-Additionally, I have a powerful dev machine and I wanted to use that as a runner so I didn't have to pay for a third-party service
-to use what resources I already have.
+Additionally, if you have a powerful machine available to you and want to use that as a runner so you don't have to pay for a third-
+party service to use what resources you already have available.
 
 ## Features
 
@@ -21,7 +21,6 @@ to use what resources I already have.
 ## Limitations
 
 * There's no dispatching layer so you'll pay more than something like [runs-on](https://runs-on.com/) if that's your jam.
-* Docker and related actions don't work. Contributions welcome to get docker-in-docker working.
 
 ## Usage with Docker
 
@@ -64,7 +63,7 @@ services:
 
 Then
 
-```
+```sh
 docker compose up -d
 ```
 
@@ -104,3 +103,40 @@ services:
 ```
 
 And you should now have four x86-64 runners and four arm64 runners. Neat!
+
+## Docker-in-Docker
+
+Some example compose files are available to demonstrate how to use this Docker-based GitHub Actions runner
+with Docker-based GitHub Actions (ex. `docker/build-push-action`), a form of Docker-in-Docker.
+
+### [`DinD with Sysbox`](docker-compose.sysbox-dind.yml)
+
+This version is more secure but has some limitations, notably it does not support platform emulation due to
+binfmt_misc support in Sysbox. It also requires [Sysbox](https://github.com/nestybox/sysbox) to be
+installed on the host running the Actions runners, which has certain [Linux distro limitations](https://github.com/nestybox/sysbox/blob/master/docs/distro-compat.md).
+
+To use this version, make sure your host meets the requirements and install Sysbox on the host. Use the example
+compose file, or specify the `sysbox-runc` runtime and set the environment variable `DOCKER_SYSBOX_RUNTIME` to
+a non-empty string (ex. `1` or `true`) in your own compose file.
+
+### [`DinD with a sidecar`](docker-compose.sidecar-dind.yml)
+
+**This version is insecure. Docker containers can access the host. TLS is enabled on the Docker daemon to
+minimize network exposure to rogue clients. Make sure you trust the Actions jobs that can be executed on
+these runners, including pull requests!**
+
+This version is more flexible than the Sysbox-based DinD solution and supports platform emulation. It works
+by spawning Docker as a separate service (a sidecar) and setting the appropriate environment variables to enable
+communication from the runners. This version requires no extra configuration and should work "out of the box."
+
+```sh
+docker exec -t gha-runner-gha-runner-arm64-1 docker run --rm -t arm64v8/ubuntu uname -m
+aarch64
+```
+
+### [`DinD with a sidecar (no PE)`](docker-compose.sidecar-dind-nope.yml)
+
+This version is the same as [`DinD with a sidecar`](#dind-with-a-sidecar) except it has platform
+emulation support removed. **This does not make it any more secure.** But, you can use this version if you do not
+need platform emulation support and your host lacks support for [Sysbox](https://github.com/nestybox/sysbox),
+or you don't want to install it.

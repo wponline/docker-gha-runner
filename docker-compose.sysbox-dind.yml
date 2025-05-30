@@ -1,0 +1,14 @@
+services:
+  gha-runner:
+    # image: ghcr.io/kevmo314/docker-gha-runner:main
+    build:
+      context: .
+      args:
+        OS: linux
+        VERSION: 2.324.0
+    runtime: sysbox-runc
+    restart: always
+    environment:
+      - DOCKER_SYSBOX_RUNTIME=true
+    env_file:
+      - container-vars.env

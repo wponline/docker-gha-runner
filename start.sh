@@ -1,10 +1,10 @@
 #!/bin/bash
 
-REG_TOKEN=$(curl -fsS -X POST -H "Authorization: token ${ACCESS_TOKEN}" -H "Accept: application/vnd.github+json" https://api.github.com/repos/${REPOSITORY}/actions/runners/registration-token | jq .token --raw-output)
+REG_TOKEN=$(curl -fsS -X POST -H "Authorization: token ${ACCESS_TOKEN}" -H "Accept: application/vnd.github+json" https://api.github.com/orgs/${ORG}/actions/runners/registration-token | jq .token --raw-output)
 
 echo "Using registration token $REG_TOKEN"
 
-./config.sh --url https://github.com/${REPOSITORY} --token $REG_TOKEN --ephemeral --unattended
+./config.sh --url https://github.com/${ORG} --token $REG_TOKEN --ephemeral --unattended
 
 cleanup() {
     echo "Removing runner..."
@@ -22,7 +22,7 @@ trap 'cleanup; exit 143' TERM
 trap 'cleanup' HUP QUIT ABRT EXIT
 
 unset ACCESS_TOKEN
-unset REPOSITORY
+unset ORG
 
 if [ -n ${DOCKER_SYSBOX_RUNTIME} ]; then
     sudo rm -f /home/github/dockerd.pid

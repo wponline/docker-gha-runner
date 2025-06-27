@@ -13,21 +13,21 @@ party service to use what resources you already have available.
 
 ## Features
 
-* Stateless execution
-* Container isolation
-* Self-host it wherever you want
-* Architecture emulation via QEMU
+- Stateless execution
+- Container isolation
+- Self-host it wherever you want
+- Architecture emulation via QEMU
 
 ## Limitations
 
-* There's no dispatching layer so you'll pay more than something like [runs-on](https://runs-on.com/) if that's your jam.
+- There's no dispatching layer so you'll pay more than something like [runs-on](https://runs-on.com/) if that's your jam.
 
 ## Usage with Docker
 
 Bring up the container, setting `ACCESS_TOKEN` and `REPOSITORY`.
 
 ```sh
-docker run -e REPOSITORY=... -e ACCESS_TOKEN=... -d --rm --restart always ghcr.io/kevmo314/docker-gha-runner:main
+docker run -e ORG=... -e ACCESS_TOKEN=... -d --rm --restart always ghcr.io/wponline/docker-gha-runner:main
 ```
 
 Once it's running, check out your runners page:
@@ -51,13 +51,13 @@ Create a `docker-compose.yml`
 ```yaml
 services:
   runner:
-    image: ghcr.io/kevmo314/docker-gha-runner:main
+    image: ghcr.io/wponline/docker-gha-runner:main
     restart: always
     deploy:
       mode: replicated
       replicas: 4
     environment:
-      REPOSITORY: <the repository you wish to link to>
+      ORG: <the org name you wish to link to>
       ACCESS_TOKEN: <github access token>
 ```
 
@@ -81,24 +81,24 @@ Then, set `platform` in your compose file:
 ```yaml
 services:
   runner_amd64:
-    image: ghcr.io/kevmo314/docker-gha-runner:main
+    image: ghcr.io/wponline/docker-gha-runner:main
     platform: linux/amd64
     restart: always
     deploy:
       mode: replicated
       replicas: 4
     environment:
-      REPOSITORY: <the repository you wish to link to>
+      ORG: <the org name you wish to link to>
       ACCESS_TOKEN: <github access token>
   runner_arm64:
-    image: ghcr.io/kevmo314/docker-gha-runner:main
+    image: ghcr.io/wponline/docker-gha-runner:main
     platform: linux/arm64
     restart: always
     deploy:
       mode: replicated
       replicas: 4
     environment:
-      REPOSITORY: <the repository you wish to link to>
+      ORG: <the org name you wish to link to>
       ACCESS_TOKEN: <github access token>
 ```
 

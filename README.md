@@ -24,7 +24,7 @@ party service to use what resources you already have available.
 
 ## Usage with Docker
 
-Bring up the container, setting `ACCESS_TOKEN` and `REPOSITORY`.
+Bring up the container, setting `ACCESS_TOKEN` and `ORG`.
 
 ```sh
 docker run -e ORG=... -e ACCESS_TOKEN=... -d --rm --restart always ghcr.io/wponline/docker-gha-runner:main
